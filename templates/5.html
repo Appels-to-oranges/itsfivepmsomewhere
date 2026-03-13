@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>It's Five PM Somewhere</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <nav>
+    <a href="/">It's Five PM Somewhere</a>
+  </nav>
+
+  <main class="page-wrap">
+    <div class="title-wrap">
+      <h1 class="main-title">It's Five O'Clock Somewhere</h1>
+    </div>
+
+    <div class="title">{{ string1 }}</div>
+    <div class="time">{{ string2 }}</div>
+    <div class="drink">{{ string3 }}</div>
+
+    <div id="image-track" class="image-track">
+      {% for link in links[:7] %}
+      <img src="{{ link }}" alt="" class="image">
+      {% endfor %}
+    </div>
+
+    {% if message and message != "No description available" %}
+    <div class="message">{{ message }}</div>
+    {% endif %}
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Payson Carpenter</p>
+  </footer>
+</body>
+</html>

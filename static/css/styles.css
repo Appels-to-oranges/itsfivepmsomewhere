@@ -1,0 +1,88 @@
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body {
+  color: white;
+  font-family: Arial, sans-serif;
+  background-color: black;
+}
+
+nav {
+  background-color: rgba(0, 0, 0, 0.77);
+  height: 3rem;
+  display: flex;
+  align-items: center;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  letter-spacing: 0.12rem;
+  padding: 0 1rem;
+  font-size: 0.9rem;
+}
+
+nav a:hover {
+  color: #bbb;
+}
+
+.page-wrap {
+  padding: 1rem 1rem 4rem;
+}
+
+.main-title {
+  font-size: clamp(2rem, 8vw, 7rem);
+  line-height: 0.9;
+  margin: 0.2rem 0 1rem;
+  text-transform: uppercase;
+}
+
+.title,
+.time,
+.drink {
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  margin: 0.2rem 0;
+}
+
+.image-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.image {
+  width: 10rem;
+  height: 10rem;
+  object-fit: cover;
+  transition: transform 0.2s ease-in-out;
+}
+
+.image:hover {
+  transform: translateY(-6px);
+}
+
+.message {
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  max-width: 70rem;
+  color: #ddd;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.77);
+  font-size: 0.75rem;
+}
