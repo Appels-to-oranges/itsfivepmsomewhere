@@ -14,4 +14,4 @@ The app runs on `http://localhost:5000/`.
 ## Deploy to Railway
 
 - Create a new Railway project from this repo.
-- Railway will use `Procfile` to launch `gunicorn app:app`.
+- Railway will use `Procfile` to launch gunicorn bound to `0.0.0.0:$PORT` with a single worker profile to avoid memory and boot crashes.
