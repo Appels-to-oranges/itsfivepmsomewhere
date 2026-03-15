@@ -94,7 +94,7 @@ def pick_by_seed(options, seed):
 def get_five_pm_candidates(limit=40):
     current_time_utc = datetime.now(pytz.utc)
     excluded_country_codes = {"AQ"}
-    candidates = []
+    best_by_country = {}
 
     for country_code, country_name in pytz.country_names.items():
         if country_code in excluded_country_codes:
@@ -106,18 +106,27 @@ def get_five_pm_candidates(limit=40):
             diff = abs(local_time - today_five)
             next_five = today_five if local_time <= today_five else today_five + timedelta(days=1)
 
-            candidates.append(
-                {
-                    "country": country_name,
-                    "country_code": country_code,
-                    "timezone_name": timezone_name,
-                    "local_time": local_time,
-                    "minutes_from_five": int(diff.total_seconds() // 60),
-                    "seconds_to_next_five": int((next_five - local_time).total_seconds()),
-                    "is_exactly_five": local_time.hour == 17 and local_time.minute == 0,
-                }
-            )
+            candidate = {
+                "country": country_name,
+                "country_code": country_code,
+                "timezone_name": timezone_name,
+                "local_time": local_time,
+                "minutes_from_five": int(diff.total_seconds() // 60),
+                "seconds_to_next_five": int((next_five - local_time).total_seconds()),
+                "is_exactly_five": local_time.hour == 17 and local_time.minute == 0,
+            }
+            existing = best_by_country.get(country_code)
+            if (
+                existing is None
+                or candidate["minutes_from_five"] < existing["minutes_from_five"]
+                or (
+                    candidate["minutes_from_five"] == existing["minutes_from_five"]
+                    and candidate["seconds_to_next_five"] < existing["seconds_to_next_five"]
+                )
+            ):
+                best_by_country[country_code] = candidate
 
+    candidates = list(best_by_country.values())
     candidates.sort(key=lambda item: (item["minutes_from_five"], item["country"], item["timezone_name"]))
     return candidates[:limit]
 
@@ -179,39 +188,58 @@ def trim_text_by_sentences(text, max_chars=480):
 @lru_cache(maxsize=256)
 def get_wikipedia_info(query_term):
     try:
-        search_params = {
-            "action": "query",
-            "format": "json",
-            "list": "search",
-            "srsearch": query_term,
-            "utf8": 1,
-            "formatversion": 2,
-        }
-        response = requests.get(WIKI_API, params=search_params, headers=REQUEST_HEADERS, timeout=10)
-        response.raise_for_status()
-        search_results = response.json().get("query", {}).get("search", [])
-
-        if not search_results:
-            return {"images": [], "text": "No description available"}
-
-        page_id = search_results[0]["pageid"]
-        page_params = {
+        # First attempt: exact title lookup, so country postcards stay country-specific.
+        exact_params = {
             "action": "query",
             "format": "json",
             "prop": "extracts|images",
-            "pageids": page_id,
+            "titles": query_term,
             "exintro": True,
             "explaintext": True,
             "utf8": 1,
             "formatversion": 2,
         }
-        response = requests.get(WIKI_API, params=page_params, headers=REQUEST_HEADERS, timeout=10)
+        response = requests.get(WIKI_API, params=exact_params, headers=REQUEST_HEADERS, timeout=10)
         response.raise_for_status()
         pages = response.json().get("query", {}).get("pages", [])
-        if not pages:
-            return {"images": [], "text": "No description available"}
+        page = pages[0] if pages else {}
+        if page.get("missing"):
+            page = {}
 
-        page = pages[0]
+        # Fallback: search when exact title is unavailable.
+        if not page:
+            search_params = {
+                "action": "query",
+                "format": "json",
+                "list": "search",
+                "srsearch": query_term,
+                "utf8": 1,
+                "formatversion": 2,
+            }
+            response = requests.get(WIKI_API, params=search_params, headers=REQUEST_HEADERS, timeout=10)
+            response.raise_for_status()
+            search_results = response.json().get("query", {}).get("search", [])
+            if not search_results:
+                return {"images": [], "text": "No description available"}
+
+            page_id = search_results[0]["pageid"]
+            page_params = {
+                "action": "query",
+                "format": "json",
+                "prop": "extracts|images",
+                "pageids": page_id,
+                "exintro": True,
+                "explaintext": True,
+                "utf8": 1,
+                "formatversion": 2,
+            }
+            response = requests.get(WIKI_API, params=page_params, headers=REQUEST_HEADERS, timeout=10)
+            response.raise_for_status()
+            pages = response.json().get("query", {}).get("pages", [])
+            if not pages:
+                return {"images": [], "text": "No description available"}
+            page = pages[0]
+
         text = trim_text_by_sentences(page.get("extract", "No description available"))
 
         image_urls = []
@@ -460,8 +488,7 @@ def build_page_context(spin_index=0):
     profile = get_country_profile(country_code)
     national_drink = get_national_liquor(country)
 
-    wiki_query = f"{country} landmarks culture"
-    wiki_info = get_wikipedia_info(wiki_query)
+    wiki_info = get_wikipedia_info(country)
     if not wiki_info["images"] and national_drink != NO_DRINK_TEXT:
         wiki_info = get_wikipedia_info(national_drink)
 
