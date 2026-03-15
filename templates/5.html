@@ -8,32 +8,166 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-  <nav>
-    <a href="/">It's Five PM Somewhere</a>
-  </nav>
+  <main class="page">
+    <section class="hero card">
+      <p class="eyebrow">Global happy-hour tracker</p>
+      <h1>It's Five O'Clock Somewhere.</h1>
+      <p class="lead">Tonight's headline country is <strong>{{ country }}</strong>. Because responsible journalism means identifying where the vibe is strongest.</p>
+      <div class="spin-controls">
+        <a href="/?spin={{ next_spin_index }}" class="spin-button">Spin again</a>
+        {% if spin_index != 0 %}
+        <a href="/" class="ghost-button">Back to closest 5 PM</a>
+        {% endif %}
+      </div>
 
-  <main class="page-wrap">
-    <div class="title-wrap">
-      <h1 class="main-title">It's Five O'Clock Somewhere</h1>
-    </div>
+      <div class="hero-grid">
+        <div class="stat">
+          <span>Local time</span>
+          <strong>{{ local_time }}</strong>
+          <small>{{ local_day }}</small>
+        </div>
+        <div class="stat">
+          <span>Timezone</span>
+          <strong>{{ timezone_name }}</strong>
+          <small>{{ minutes_from_five }} minutes from 5 PM</small>
+        </div>
+        <div class="stat">
+          <span>Countdown</span>
+          <strong id="countdown">--:--:--</strong>
+          <small>until next 5 PM</small>
+        </div>
+      </div>
 
-    <div class="title">{{ string1 }}</div>
-    <div class="time">{{ string2 }}</div>
-    <div class="drink">{{ string3 }}</div>
+      <p class="status-pill">
+        {% if is_exactly_five %}
+          It is exactly 5:00 PM there. This is not a drill.
+        {% elif minutes_from_five <= 30 %}
+          They are within 30 minutes of 5 PM. Pre-game responsibly.
+        {% else %}
+          They are on a different chapter of the day. Stay patient.
+        {% endif %}
+      </p>
+    </section>
 
-    <div id="image-track" class="image-track">
-      {% for link in links[:7] %}
-      <img src="{{ link }}" alt="" class="image">
-      {% endfor %}
-    </div>
+    <section class="info-layout">
+      <article class="card profile">
+        <h2>Country Briefing</h2>
+        <div class="profile-head">
+          {% if country_profile.flag %}
+          <img src="{{ country_profile.flag }}" alt="{{ country }} flag" class="flag" />
+          {% endif %}
+          <div>
+            <p><strong>{{ country }}</strong> ({{ country_code }})</p>
+            <p>Capital: {{ country_profile.capital }}</p>
+          </div>
+        </div>
+        <ul class="fact-list">
+          <li><span>Region</span>{{ country_profile.region }}</li>
+          <li><span>Population</span>{{ country_profile.population }}</li>
+          <li><span>Currency</span>{{ country_profile.currencies }}</li>
+          <li><span>Languages</span>{{ country_profile.languages }}</li>
+          <li><span>Weekend status</span>{% if is_weekend %}Weekend mode{% else %}Weekday grind{% endif %}</li>
+          <li><span>National drink</span>{{ national_drink }}</li>
+        </ul>
+        {% if country_profile.map_url %}
+        <a href="{{ country_profile.map_url }}" target="_blank" rel="noopener noreferrer" class="map-link">Open on map</a>
+        {% endif %}
+      </article>
 
-    {% if message and message != "No description available" %}
-    <div class="message">{{ message }}</div>
-    {% endif %}
+      <article class="card fun">
+        <h2>Day Drinker Entertainment</h2>
+        <p class="fun-item">{{ toast }}</p>
+        <p class="fun-item">{{ mission }}</p>
+        <p class="fun-item">{{ playful_fact }}</p>
+        <div class="cheers-box">
+          <p><strong>Local cheers:</strong> {{ cheers.phrase }}</p>
+          <p><strong>Say it like:</strong> {{ cheers.pronunciation }} ({{ cheers.language_name }})</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="info-layout">
+      <article class="card weather">
+        <h2>Patio Conditions</h2>
+        <div class="weather-grid">
+          <p><span>Condition</span><strong>{{ weather.condition }}</strong></p>
+          <p><span>Temperature</span><strong>{{ weather.temperature_c }} C</strong></p>
+          <p><span>Feels like</span><strong>{{ weather.feels_like_c }} C</strong></p>
+          <p><span>Wind</span><strong>{{ weather.wind_kph }} km/h</strong></p>
+          <p><span>Precipitation</span><strong>{{ weather.precip_mm }} mm</strong></p>
+        </div>
+        <div class="patio-score">
+          <p class="score-label">Patio score: <strong>{{ weather.patio_score }}/100</strong> - {{ weather.patio_label }}</p>
+          <div class="score-bar">
+            <span style="width: {{ weather.patio_score }}%;"></span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card mini-map">
+        <h2>Mini Map</h2>
+        {% if country_profile.map_embed_url %}
+        <iframe
+          title="{{ country }} map"
+          src="{{ country_profile.map_embed_url }}"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+        {% else %}
+        <p class="message">Map is unavailable for this location right now.</p>
+        {% endif %}
+      </article>
+    </section>
+
+    <section class="card nearby">
+      <h2>Nearby 5 PM Contenders</h2>
+      <div class="nearby-grid">
+        {% for spot in nearby_spots %}
+        <a class="nearby-item" href="/?spin={{ spot.spin }}">
+          <strong>{{ spot.country }} ({{ spot.country_code }})</strong>
+          <span>{{ spot.local_time }} local time</span>
+          <small>{{ spot.minutes_from_five }} mins from 5 PM</small>
+        </a>
+        {% endfor %}
+      </div>
+      <p class="message">Tap any contender to jump to that country without waiting for the cosmic roulette wheel.</p>
+    </section>
+
+    <section class="card gallery">
+      <h2>Postcards From {{ country }}</h2>
+      <div class="image-track">
+        {% for link in links %}
+        <img src="{{ link }}" alt="{{ country }} view" class="image">
+        {% endfor %}
+      </div>
+      {% if message and message != "No description available" %}
+      <p class="message">{{ message }}</p>
+      {% endif %}
+    </section>
   </main>
 
-  <footer>
-    <p>&copy; 2026 Payson Carpenter</p>
-  </footer>
+  <script>
+    (function () {
+      var remaining = {{ seconds_to_next_five }};
+      var countdownEl = document.getElementById("countdown");
+
+      function formatSeconds(totalSeconds) {
+        var hours = Math.floor(totalSeconds / 3600);
+        var minutes = Math.floor((totalSeconds % 3600) / 60);
+        var seconds = totalSeconds % 60;
+        return String(hours).padStart(2, "0") + ":" +
+          String(minutes).padStart(2, "0") + ":" +
+          String(seconds).padStart(2, "0");
+      }
+
+      function tick() {
+        countdownEl.textContent = formatSeconds(remaining);
+        remaining = remaining > 0 ? remaining - 1 : 0;
+      }
+
+      tick();
+      window.setInterval(tick, 1000);
+    })();
+  </script>
 </body>
 </html>
