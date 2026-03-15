@@ -38,7 +38,6 @@ body {
   border-radius: 18px;
   padding: 1.1rem;
   backdrop-filter: blur(8px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
 .hero h1 {
@@ -86,24 +85,6 @@ body {
   color: var(--text);
   border-color: var(--line);
   background: rgba(255, 255, 255, 0.04);
-}
-
-.spin-button:hover,
-.ghost-button:hover,
-.map-link:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.04);
-}
-
-.top-layout {
-  align-items: start;
-}
-
-.stat-stack h2,
-.nearby h2,
-.weather h2,
-.mini-map h2 {
-  margin-top: 0;
 }
 
 .hero-grid {
@@ -309,7 +290,6 @@ body {
   background: rgba(0, 0, 0, 0.2);
   display: grid;
   gap: 0.25rem;
-  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
 }
 
 .nearby-item span,
@@ -319,8 +299,6 @@ body {
 
 .nearby-item:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 190, 11, 0.6);
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .image-track {

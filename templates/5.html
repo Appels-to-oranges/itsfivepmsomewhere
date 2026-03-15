@@ -10,92 +10,43 @@
 <body>
   <main class="page">
     <section class="hero card">
-      <p class="eyebrow">Global happy-hour dashboard</p>
-      <h1>Useful first. Slightly unhinged second.</h1>
-      <p class="lead">
-        This page tracks where it is closest to 5:00 PM right now and gives you practical context.
-        The spotlight country is <strong>{{ country }}</strong>. The humor is intentionally low-calorie.
-      </p>
+      <p class="eyebrow">Global happy-hour tracker</p>
+      <h1>It's Five O'Clock Somewhere.</h1>
+      <p class="lead">Tonight's headline country is <strong>{{ country }}</strong>. Because responsible journalism means identifying where the vibe is strongest.</p>
       <div class="spin-controls">
-        <a href="/?spin={{ next_spin_index }}{% if viewer_timezone %}&tz={{ viewer_timezone }}{% endif %}" class="spin-button">Find another spotlight</a>
+        <a href="/?spin={{ next_spin_index }}" class="spin-button">Spin again</a>
         {% if spin_index != 0 %}
-        <a href="/{% if viewer_timezone %}?tz={{ viewer_timezone }}{% endif %}" class="ghost-button">Back to top contender</a>
+        <a href="/" class="ghost-button">Back to closest 5 PM</a>
         {% endif %}
       </div>
-    </section>
 
-    <section class="info-layout top-layout">
-      <article class="card stat-stack">
-        <h2>Your Local Clock</h2>
-        {% if user_clock %}
-        <div class="hero-grid">
-          <div class="stat">
-            <span>Local time</span>
-            <strong>{{ user_clock.local_time }}</strong>
-            <small>{{ user_clock.local_day }}</small>
-          </div>
-          <div class="stat">
-            <span>Timezone</span>
-            <strong>{{ user_clock.timezone_name }}</strong>
-            <small>{{ user_clock.minutes_from_five }} minutes from 5 PM</small>
-          </div>
-          <div class="stat">
-            <span>Countdown</span>
-            <strong id="user-countdown">--:--:--</strong>
-            <small>until your next 5 PM</small>
-          </div>
+      <div class="hero-grid">
+        <div class="stat">
+          <span>Local time</span>
+          <strong>{{ local_time }}</strong>
+          <small>{{ local_day }}</small>
         </div>
-        <p class="status-pill">{{ user_clock.status }}</p>
+        <div class="stat">
+          <span>Timezone</span>
+          <strong>{{ timezone_name }}</strong>
+          <small>{{ minutes_from_five }} minutes from 5 PM</small>
+        </div>
+        <div class="stat">
+          <span>Countdown</span>
+          <strong id="countdown">--:--:--</strong>
+          <small>until next 5 PM</small>
+        </div>
+      </div>
+
+      <p class="status-pill">
+        {% if is_exactly_five %}
+          It is exactly 5:00 PM there. This is not a drill.
+        {% elif minutes_from_five <= 30 %}
+          They are within 30 minutes of 5 PM. Pre-game responsibly.
         {% else %}
-        <p class="message">
-          We could not read your timezone yet. Refresh once and we will personalize this section.
-        </p>
+          They are on a different chapter of the day. Stay patient.
         {% endif %}
-      </article>
-
-      <article class="card stat-stack">
-        <h2>Spotlight Country: {{ country }}</h2>
-        <div class="hero-grid">
-          <div class="stat">
-            <span>Local time</span>
-            <strong>{{ local_time }}</strong>
-            <small>{{ local_day }}</small>
-          </div>
-          <div class="stat">
-            <span>Timezone</span>
-            <strong>{{ timezone_name }}</strong>
-            <small>{{ minutes_from_five }} minutes from 5 PM</small>
-          </div>
-          <div class="stat">
-            <span>Countdown</span>
-            <strong id="spotlight-countdown">--:--:--</strong>
-            <small>until next 5 PM there</small>
-          </div>
-        </div>
-        <p class="status-pill">
-          {% if is_exactly_five %}
-            It is exactly 5:00 PM there. The universe supports this decision.
-          {% elif minutes_from_five <= 30 %}
-            They are within 30 minutes of 5 PM. Ice your glass.
-          {% else %}
-            They are not close to 5 PM yet. Consider this recon mode.
-          {% endif %}
-        </p>
-      </article>
-    </section>
-
-    <section class="card nearby">
-      <h2>Global Live Board (Closest to 5 PM)</h2>
-      <div class="nearby-grid">
-        {% for spot in live_board %}
-        <a class="nearby-item" href="/?spin={{ loop.index0 }}{% if viewer_timezone %}&tz={{ viewer_timezone }}{% endif %}">
-          <strong>{{ spot.country }} ({{ spot.country_code }})</strong>
-          <span>{{ spot.local_time }} local time</span>
-          <small>{{ spot.minutes_from_five }} mins from 5 PM - {{ spot.label }}</small>
-        </a>
-        {% endfor %}
-      </div>
-      <p class="message">Pick any card to jump there. This is time travel with paperwork.</p>
+      </p>
     </section>
 
     <section class="info-layout">
@@ -123,27 +74,8 @@
         {% endif %}
       </article>
 
-      <article class="card weather">
-        <h2>Patio Conditions</h2>
-        <div class="weather-grid">
-          <p><span>Condition</span><strong>{{ weather.condition }}</strong></p>
-          <p><span>Temperature</span><strong>{{ weather.temperature_c }} C</strong></p>
-          <p><span>Feels like</span><strong>{{ weather.feels_like_c }} C</strong></p>
-          <p><span>Wind</span><strong>{{ weather.wind_kph }} km/h</strong></p>
-          <p><span>Precipitation</span><strong>{{ weather.precip_mm }} mm</strong></p>
-        </div>
-        <div class="patio-score">
-          <p class="score-label">Patio score: <strong>{{ weather.patio_score }}/100</strong> - {{ weather.patio_label }}</p>
-          <div class="score-bar">
-            <span style="width: {{ weather.patio_score }}%;"></span>
-          </div>
-        </div>
-      </article>
-    </section>
-
-    <section class="info-layout">
       <article class="card fun">
-        <h2>Low-Stakes Fun</h2>
+        <h2>Day Drinker Entertainment</h2>
         <p class="fun-item">{{ toast }}</p>
         <p class="fun-item">{{ mission }}</p>
         <p class="fun-item">{{ playful_fact }}</p>
@@ -159,6 +91,25 @@
           >
             Listen
           </button>
+        </div>
+      </article>
+    </section>
+
+    <section class="info-layout">
+      <article class="card weather">
+        <h2>Patio Conditions</h2>
+        <div class="weather-grid">
+          <p><span>Condition</span><strong>{{ weather.condition }}</strong></p>
+          <p><span>Temperature</span><strong>{{ weather.temperature_c }} C</strong></p>
+          <p><span>Feels like</span><strong>{{ weather.feels_like_c }} C</strong></p>
+          <p><span>Wind</span><strong>{{ weather.wind_kph }} km/h</strong></p>
+          <p><span>Precipitation</span><strong>{{ weather.precip_mm }} mm</strong></p>
+        </div>
+        <div class="patio-score">
+          <p class="score-label">Patio score: <strong>{{ weather.patio_score }}/100</strong> - {{ weather.patio_label }}</p>
+          <div class="score-bar">
+            <span style="width: {{ weather.patio_score }}%;"></span>
+          </div>
         </div>
       </article>
 
@@ -177,6 +128,20 @@
       </article>
     </section>
 
+    <section class="card nearby">
+      <h2>Nearby 5 PM Contenders</h2>
+      <div class="nearby-grid">
+        {% for spot in nearby_spots %}
+        <a class="nearby-item" href="/?spin={{ spot.spin }}">
+          <strong>{{ spot.country }} ({{ spot.country_code }})</strong>
+          <span>{{ spot.local_time }} local time</span>
+          <small>{{ spot.minutes_from_five }} mins from 5 PM</small>
+        </a>
+        {% endfor %}
+      </div>
+      <p class="message">Tap any contender to jump to that country without waiting for the cosmic roulette wheel.</p>
+    </section>
+
     <section class="card gallery">
       <h2>Postcards From {{ country }}</h2>
       <div class="image-track">
@@ -192,22 +157,8 @@
 
   <script>
     (function () {
-      var params = new URLSearchParams(window.location.search);
-      var hasTimezone = params.has("tz");
-      if (!hasTimezone && typeof Intl !== "undefined" && Intl.DateTimeFormat) {
-        var detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (detectedTimezone) {
-          params.set("tz", detectedTimezone);
-          var nextUrl = window.location.pathname + "?" + params.toString();
-          window.location.replace(nextUrl);
-          return;
-        }
-      }
-
-      var spotlightRemaining = {{ seconds_to_next_five }};
-      var userRemaining = {% if user_clock %}{{ user_clock.seconds_to_next_five }}{% else %}null{% endif %};
-      var spotlightCountdownEl = document.getElementById("spotlight-countdown");
-      var userCountdownEl = document.getElementById("user-countdown");
+      var remaining = {{ seconds_to_next_five }};
+      var countdownEl = document.getElementById("countdown");
       var listenButton = document.getElementById("listen-cheers");
 
       function formatSeconds(totalSeconds) {
@@ -219,17 +170,9 @@
           String(seconds).padStart(2, "0");
       }
 
-      function tickCountdown(el, value) {
-        if (!el || value === null || typeof value === "undefined") {
-          return value;
-        }
-        el.textContent = formatSeconds(value);
-        return value > 0 ? value - 1 : 0;
-      }
-
       function tick() {
-        spotlightRemaining = tickCountdown(spotlightCountdownEl, spotlightRemaining);
-        userRemaining = tickCountdown(userCountdownEl, userRemaining);
+        countdownEl.textContent = formatSeconds(remaining);
+        remaining = remaining > 0 ? remaining - 1 : 0;
       }
 
       tick();

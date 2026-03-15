@@ -529,63 +529,7 @@ def build_nearby_spots(candidates, picked_index, count=4):
     return spots
 
 
-def build_user_clock(viewer_timezone):
-    if not viewer_timezone or viewer_timezone not in pytz.all_timezones_set:
-        return None
-
-    now_utc = datetime.now(pytz.utc)
-    local_time = now_utc.astimezone(pytz.timezone(viewer_timezone))
-    today_five = local_time.replace(hour=17, minute=0, second=0, microsecond=0)
-    next_five = today_five if local_time <= today_five else today_five + timedelta(days=1)
-    seconds_to_next = int((next_five - local_time).total_seconds())
-    minutes_from_five = int(abs((local_time - today_five).total_seconds()) // 60)
-
-    if local_time.hour == 17 and local_time.minute == 0:
-        status = "It is exactly 5:00 PM for you right now. Legendary timing."
-    elif local_time < today_five and minutes_from_five <= 60:
-        status = "You are in the final hour before 5 PM. Prep the playlist."
-    elif local_time < today_five:
-        status = "Your local 5 PM is still loading."
-    elif minutes_from_five <= 120:
-        status = "You are in post-5 PM mode. Hydrate between rounds."
-    else:
-        status = "You are far from 5 PM right now. Patience is a virtue."
-
-    return {
-        "timezone_name": viewer_timezone,
-        "local_time": local_time.strftime("%I:%M:%S %p"),
-        "local_day": local_time.strftime("%A, %B %d"),
-        "minutes_from_five": minutes_from_five,
-        "seconds_to_next_five": seconds_to_next,
-        "status": status,
-    }
-
-
-def build_live_board(candidates, count=8):
-    board = []
-    for item in candidates[:count]:
-        minutes = item["minutes_from_five"]
-        if item["is_exactly_five"]:
-            label = "It is 5 PM now"
-        elif minutes <= 30:
-            label = "Almost 5 PM"
-        else:
-            label = "Not close yet"
-
-        board.append(
-            {
-                "country": item["country"],
-                "country_code": item["country_code"],
-                "local_time": item["local_time"].strftime("%I:%M %p"),
-                "timezone_name": item["timezone_name"],
-                "minutes_from_five": minutes,
-                "label": label,
-            }
-        )
-    return board
-
-
-def build_page_context(spin_index=0, viewer_timezone=""):
+def build_page_context(spin_index=0):
     chosen, candidates, picked_index = pick_candidate(spin_index)
     if not chosen:
         return {}
@@ -604,8 +548,6 @@ def build_page_context(spin_index=0, viewer_timezone=""):
     fun_bits = build_fun_bits(country, chosen["local_time"])
     is_weekend = chosen["local_time"].weekday() >= 5
     nearby_spots = build_nearby_spots(candidates, picked_index)
-    live_board = build_live_board(candidates)
-    user_clock = build_user_clock(viewer_timezone)
 
     return {
         "country": country,
@@ -629,9 +571,6 @@ def build_page_context(spin_index=0, viewer_timezone=""):
         "spin_index": picked_index,
         "next_spin_index": picked_index + 1,
         "nearby_spots": nearby_spots,
-        "live_board": live_board,
-        "user_clock": user_clock,
-        "viewer_timezone": viewer_timezone,
     }
 
 
@@ -639,12 +578,11 @@ def build_page_context(spin_index=0, viewer_timezone=""):
 @app.route("/5")
 def five_pm():
     spin_param = request.args.get("spin", "0")
-    viewer_timezone = request.args.get("tz", "").strip()
     try:
         spin_index = int(spin_param)
     except ValueError:
         spin_index = 0
-    return render_template("5.html", **build_page_context(spin_index, viewer_timezone))
+    return render_template("5.html", **build_page_context(spin_index))
 
 
 if __name__ == "__main__":
