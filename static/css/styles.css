@@ -201,6 +201,26 @@ body {
   margin: 0.3rem 0;
 }
 
+.listen-button {
+  margin-top: 0.5rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.listen-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.listen-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .weather-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

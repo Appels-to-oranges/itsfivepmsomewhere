@@ -82,6 +82,15 @@
         <div class="cheers-box">
           <p><strong>Local cheers:</strong> {{ cheers.phrase }}</p>
           <p><strong>Say it like:</strong> {{ cheers.pronunciation }} ({{ cheers.language_name }})</p>
+          <button
+            id="listen-cheers"
+            class="listen-button"
+            type="button"
+            data-phrase="{{ cheers.phrase }}"
+            data-locale="{{ cheers.speech_locale }}"
+          >
+            Listen
+          </button>
         </div>
       </article>
     </section>
@@ -150,6 +159,7 @@
     (function () {
       var remaining = {{ seconds_to_next_five }};
       var countdownEl = document.getElementById("countdown");
+      var listenButton = document.getElementById("listen-cheers");
 
       function formatSeconds(totalSeconds) {
         var hours = Math.floor(totalSeconds / 3600);
@@ -167,6 +177,25 @@
 
       tick();
       window.setInterval(tick, 1000);
+
+      if (listenButton) {
+        listenButton.addEventListener("click", function () {
+          if (!("speechSynthesis" in window) || typeof window.SpeechSynthesisUtterance === "undefined") {
+            listenButton.textContent = "Audio unavailable";
+            listenButton.disabled = true;
+            return;
+          }
+
+          window.speechSynthesis.cancel();
+          var phrase = listenButton.getAttribute("data-phrase") || "Cheers!";
+          var locale = listenButton.getAttribute("data-locale") || "en-US";
+          var utterance = new SpeechSynthesisUtterance(phrase);
+          utterance.lang = locale;
+          utterance.rate = 0.95;
+          utterance.pitch = 1;
+          window.speechSynthesis.speak(utterance);
+        });
+      }
     })();
   </script>
 </body>

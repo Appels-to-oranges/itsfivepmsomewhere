@@ -54,6 +54,41 @@ CHEERS_BY_LANGUAGE = {
     "sw": {"phrase": "Afya!", "pronunciation": "AHF-yah"},
 }
 
+LANGUAGE_CODE_ALIASES = {
+    "eng": "en",
+    "spa": "es",
+    "fra": "fr",
+    "deu": "de",
+    "ita": "it",
+    "por": "pt",
+    "nld": "nl",
+    "swe": "sv",
+    "nor": "no",
+    "dan": "da",
+    "fin": "fi",
+    "pol": "pl",
+    "ces": "cs",
+    "slk": "sk",
+    "hun": "hu",
+    "ron": "ro",
+    "tur": "tr",
+    "ell": "el",
+    "rus": "ru",
+    "ukr": "uk",
+    "ara": "ar",
+    "heb": "he",
+    "hin": "hi",
+    "ben": "bn",
+    "jpn": "ja",
+    "kor": "ko",
+    "zho": "zh",
+    "vie": "vi",
+    "tha": "th",
+    "ind": "id",
+    "msa": "ms",
+    "swa": "sw",
+}
+
 WEATHER_CODE_LABELS = {
     0: "Clear sky",
     1: "Mostly clear",
@@ -420,16 +455,32 @@ def get_weather_snapshot(latitude, longitude):
         return fallback
 
 
-def get_local_cheers(language_details):
+def normalize_language_code(language_code):
+    if not language_code:
+        return ""
+    lowered = language_code.lower()
+    return LANGUAGE_CODE_ALIASES.get(lowered, lowered)
+
+
+def get_local_cheers(language_details, country_code):
     for language in language_details:
-        cheers_data = CHEERS_BY_LANGUAGE.get(language["code"])
+        raw_code = language.get("code", "")
+        normalized_code = normalize_language_code(raw_code)
+        cheers_data = CHEERS_BY_LANGUAGE.get(raw_code.lower()) or CHEERS_BY_LANGUAGE.get(normalized_code)
         if cheers_data:
+            speech_locale = f"{normalized_code}-{country_code.upper()}" if normalized_code else "en-US"
             return {
                 "phrase": cheers_data["phrase"],
                 "pronunciation": cheers_data["pronunciation"],
                 "language_name": language["name"],
+                "speech_locale": speech_locale,
             }
-    return {"phrase": "Cheers!", "pronunciation": "cheerz", "language_name": "local language"}
+    return {
+        "phrase": "Cheers!",
+        "pronunciation": "cheerz",
+        "language_name": "local language",
+        "speech_locale": "en-US",
+    }
 
 
 def build_fun_bits(country_name, local_time):
@@ -493,7 +544,7 @@ def build_page_context(spin_index=0):
         wiki_info = get_wikipedia_info(national_drink)
 
     weather = get_weather_snapshot(profile["latitude"], profile["longitude"])
-    cheers = get_local_cheers(profile["languages_detail"])
+    cheers = get_local_cheers(profile["languages_detail"], country_code)
     fun_bits = build_fun_bits(country, chosen["local_time"])
     is_weekend = chosen["local_time"].weekday() >= 5
     nearby_spots = build_nearby_spots(candidates, picked_index)
