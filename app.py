@@ -52,6 +52,7 @@ CHEERS_BY_LANGUAGE = {
     "id": {"phrase": "Bersulang!", "pronunciation": "ber-soo-LAHNG"},
     "ms": {"phrase": "Sorak!", "pronunciation": "soh-RAK"},
     "sw": {"phrase": "Afya!", "pronunciation": "AHF-yah"},
+    "km": {"phrase": "Choul muoy!", "pronunciation": "jool MOO-ee"},
 }
 
 LANGUAGE_CODE_ALIASES = {
@@ -87,6 +88,45 @@ LANGUAGE_CODE_ALIASES = {
     "ind": "id",
     "msa": "ms",
     "swa": "sw",
+    "khm": "km",
+}
+
+LANGUAGE_NAME_ALIASES = {
+    "english": "en",
+    "spanish": "es",
+    "french": "fr",
+    "german": "de",
+    "italian": "it",
+    "portuguese": "pt",
+    "dutch": "nl",
+    "swedish": "sv",
+    "norwegian": "no",
+    "danish": "da",
+    "finnish": "fi",
+    "polish": "pl",
+    "czech": "cs",
+    "slovak": "sk",
+    "hungarian": "hu",
+    "romanian": "ro",
+    "turkish": "tr",
+    "greek": "el",
+    "russian": "ru",
+    "ukrainian": "uk",
+    "arabic": "ar",
+    "hebrew": "he",
+    "hindi": "hi",
+    "bengali": "bn",
+    "japanese": "ja",
+    "korean": "ko",
+    "chinese": "zh",
+    "mandarin": "zh",
+    "vietnamese": "vi",
+    "thai": "th",
+    "indonesian": "id",
+    "malay": "ms",
+    "swahili": "sw",
+    "khmer": "km",
+    "cambodian": "km",
 }
 
 WEATHER_CODE_LABELS = {
@@ -462,17 +502,48 @@ def normalize_language_code(language_code):
     return LANGUAGE_CODE_ALIASES.get(lowered, lowered)
 
 
+def find_cheers_key_by_language_name(language_name):
+    lowered_name = (language_name or "").strip().lower()
+    if not lowered_name:
+        return ""
+    if lowered_name in LANGUAGE_NAME_ALIASES:
+        return LANGUAGE_NAME_ALIASES[lowered_name]
+    for name_fragment, language_key in LANGUAGE_NAME_ALIASES.items():
+        if name_fragment in lowered_name:
+            return language_key
+    return ""
+
+
+def resolve_cheers_language_key(language):
+    raw_code = (language.get("code") or "").strip().lower()
+    normalized_code = normalize_language_code(raw_code)
+
+    possible_codes = [raw_code, normalized_code]
+    for code in [raw_code, normalized_code]:
+        if not code:
+            continue
+        possible_codes.append(code.split("-", 1)[0])
+        possible_codes.append(code.split("_", 1)[0])
+        if len(code) == 3:
+            possible_codes.append(code[:2])
+
+    for code in possible_codes:
+        if code and code in CHEERS_BY_LANGUAGE:
+            return code
+
+    return find_cheers_key_by_language_name(language.get("name", ""))
+
+
 def get_local_cheers(language_details, country_code):
     for language in language_details:
-        raw_code = language.get("code", "")
-        normalized_code = normalize_language_code(raw_code)
-        cheers_data = CHEERS_BY_LANGUAGE.get(raw_code.lower()) or CHEERS_BY_LANGUAGE.get(normalized_code)
+        language_key = resolve_cheers_language_key(language)
+        cheers_data = CHEERS_BY_LANGUAGE.get(language_key)
         if cheers_data:
-            speech_locale = f"{normalized_code}-{country_code.upper()}" if normalized_code else "en-US"
+            speech_locale = f"{language_key}-{country_code.upper()}" if language_key else "en-US"
             return {
                 "phrase": cheers_data["phrase"],
                 "pronunciation": cheers_data["pronunciation"],
-                "language_name": language["name"],
+                "language_name": language.get("name", "local language"),
                 "speech_locale": speech_locale,
             }
     return {
